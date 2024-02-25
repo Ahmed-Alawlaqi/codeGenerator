@@ -3,7 +3,7 @@ import openai
 import streamlit as st
 
 
-openai.api_key = st.secrets["api_key"]
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 
