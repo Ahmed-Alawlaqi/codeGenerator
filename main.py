@@ -3,8 +3,9 @@ import openai
 import streamlit as st
 
 
-# openai.api_key = st.secrets["auth_key"]
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai.api_key = st.secrets["api_key"]
+
+
 
 def load_file():
     text = ""
