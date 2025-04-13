@@ -23,7 +23,7 @@ A web application that allows users to generate code snippets in various program
 1. Clone this repository:
    ```bash
    git clone https://github.com/your-username/code-snippet-generator.git
-   cd code-snippet-generator
+   cd code-generator
    ```
 2. Create and activate a virtual environment (recommended):
  
