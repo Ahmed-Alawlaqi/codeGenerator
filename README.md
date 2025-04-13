@@ -30,7 +30,10 @@ A web application that allows users to generate code snippets in various program
 # 3. Install Required Packages
 Install Streamlit and the OpenAI Python library:
  ```bash
-   pip install streamlit openai
+   pip install openai
+   ```
+ ```bash
+   pip install streamlit
    ```
 # 4. Install the required dependencies:
    ```bash
