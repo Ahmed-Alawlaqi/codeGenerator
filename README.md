@@ -47,7 +47,7 @@ Add your API key:
    ```
 
 ## Usage
-Run the Streamlit application:
+Run the Streamlit application on Localhost (Your Machine):
    ```bash
   streamlit run app.py
    ```
