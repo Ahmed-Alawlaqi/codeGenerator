@@ -1,87 +1,135 @@
 import os
-import openai
+from dotenv import load_dotenv
 import streamlit as st
+from openai import OpenAI
+import fitz  # PyMuPDF for PDFs
 
+# Load environment variables from .env
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Initialize OpenAI client
+client = OpenAI(api_key=api_key)
 
-
-
-def load_file():
+def load_file(uploaded_file):
+    """Reads uploaded file content (supports .txt and .pdf)"""
     text = ""
-    data_dir = os.path.join(os.getcwd(),"data")
-    for filename in os.listdir(data_dir):
-        if filename.endswith(".txt"):
-            with open(os.path.join(data_dir,filename),"r") as f:
-                text += f.read()
+    if uploaded_file.name.endswith(".txt"):
+        text = uploaded_file.read().decode("utf-8")
+    elif uploaded_file.name.endswith(".pdf"):
+        pdf = fitz.open(stream=uploaded_file.read(), filetype="pdf")
+        for page in pdf:
+            text += page.get_text()
     return text
 
-
-def get_response(text,option):
+def get_response(description, language):
+    """Generates code and explanation using OpenAI"""
     prompt = f"""
-        You are expert of coding.You'll be given a coding problem. You will code the problem
-        with '''' {option} '''' language, with simple explain of the processe.
-        text: '''' {text}''''
+    You are an expert programmer. Write a {language} program based on the following description:
+    {description}
+
+    Provide:
+    1. Complete code.
+    2. A simple step-by-step explanation.
     """
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",  # Use GPT-4o for best results
         messages=[
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": prompt},
-        ]
+            {"role": "system", "content": "You are a helpful coding assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2
     )
-    return response['choices'][0]['message']['content']
-
-
+    return response.choices[0].message.content
 
 def main():
-    #page configration
-    st.set_page_config(
-        page_title="codeGenrator",
-        page_icon="⌨️",
-        
-    )
+    # Page configuration
+    st.set_page_config(page_title="Code Generator", page_icon="⌨️")
 
-    #Header
-    st.title("Code Generator")
-    st.warning("Our app empowers you to generate clean, optimized code snippets with just a few clicks ")
+    st.title("💻 Code Generator")
+    st.warning("Generate clean, optimized code snippets in multiple languages!")
     st.divider()
-    
-    #check if the user want to upload a text or pdf file
-    lang_option=["C++","Python","C","C#","Java","JavaScript"]
-    option = st.selectbox("Select programming language",lang_option)
 
-    #Create a text area for the user to input text
-    if option:
-        user_input = st.text_area("Description of the code to generate","Print Hello world...")
+    # API Key check
+    if not api_key:
+        st.error("⚠️ API Key is missing. Please set it in your .env file.")
+        st.stop()
 
-        #Create a submit button 
-        if st.button("Submit") and user_input != "":
-            #call get_response function and print the response
-            response = get_response(user_input,option)
-            # st.subheader("Code:")
-            st.markdown(f">{response}")
+    # Language selection
+    lang_option = ["C++", "Python", "C", "C#", "Java", "JavaScript"]
+    option = st.selectbox("Select programming language", lang_option)
+
+    # File upload OR text input
+    st.subheader("Provide your problem description")
+    uploaded_file = st.file_uploader("Upload a .txt or .pdf file (optional)", type=["txt", "pdf"])
+    user_input = st.text_area("Or enter your description manually", "Print Hello World...")
+
+    if uploaded_file:
+        user_input = load_file(uploaded_file)
+
+    # Submit button
+    if st.button("Generate Code"):
+        if user_input.strip() == "":
+            st.error("Please enter a description of the code or upload a file.")
         else:
-            st.error("Please Enter Text.")
+            with st.spinner("Generating your code..."):
+                response = get_response(user_input, option)
+                st.subheader("✅ Generated Code & Explanation:")
+                st.markdown(response)
 
-    #---contact----
-    with st.container():
-        st.write("---")
-        st.subheader("Contact With Me")
-        st.write("##")
-        contact_form = """
-        <form action="https://formsubmit.co/ahm.m.awlaqi@gmail.com" method="POST">
-            <input type="hidden" name="_captcha" value="false">
-            <input type="text" name="name" Placeholder = "Your name" required>
-            <input type="email" name="email" Placeholder = "Your email" required>
-            <textarea name="message" placeholder="Your Suggestions or Comments..."></textarea>
-            <button type="submit">Send</button>
-        </form>
-        """
-        st.markdown(contact_form,unsafe_allow_html=True)
-        st.divider()
-        st.write("[Twitter](https://twitter.com/AhmedAwlaqi)")
+    # Contact Section
+    st.write("---")
+    contact_form = """
+<style>
+form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+    font-family: Arial, sans-serif;
+}
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+}
+button:hover {
+    background-color: #45a049;
+}
+h3 {
+    text-align: center;
+    color: #333;
+}
+</style>
 
+<form action="https://formsubmit.co/ahm.m.awlaqi@gmail.com" method="POST">
+    <h3>Contact Me</h3>
+    <input type="hidden" name="_captcha" value="false">
+    <input type="text" name="name" placeholder="Your name" required>
+    <input type="email" name="email" placeholder="Your email" required>
+    <textarea name="message" placeholder="Your Suggestions or Comments..." rows="5" required></textarea>
+    <button type="submit">Send Message</button>
+</form>
+"""
+
+    st.markdown(contact_form, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
